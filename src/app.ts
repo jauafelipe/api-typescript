@@ -1,15 +1,11 @@
-import express from "express";
-import * as bodyParser from "body-parser"
-//routers
-import { router } from "./routes/routes";
-//middlewares
-import { global } from "./middlewares/globalMiddleware";
-//env
 import dotenv from "dotenv";
 dotenv.config();
-//mongo
+import express from "express";
+import * as bodyParser from "body-parser";
 import mongoose, { MongooseOptions } from "mongoose";
-import { userControler } from "./controllers/userControlle";
+import cors from "cors";
+
+import { router } from "./routes/routes";
 
 class App {
   public app: express.Application;
@@ -17,41 +13,38 @@ class App {
     this.app = express();
     this.middleware();
     this.routes();
-    this.config()
     this.database();
-    this.server()
+    this.server();
   }
 
+  //middleware
   private middleware(): void {
-    this.app.use(global)
+    this.app.use(bodyParser.json());
+    this.app.use(cors({ credentials: true }));
+    this.app.use(express.json());
+    this.app.use(express.urlencoded({ extended: true }));
   }
-  
+
+  //routes
   private routes(): void {
     this.app.use(router);
   }
 
-  public config():void {
-    this.app.use(express.json());
-    this.app.use(express.urlencoded({ extended: true }))
-    
-  }
-
-  private database(): void {
+  //conection database
+  private async database(): Promise<void> {
     const mongdb: string = process.env.CONNECTION_STRING || "";
-    mongoose
+    await mongoose
       .connect(mongdb, {
         useNewUrlParser: true,
       } as MongooseOptions)
       .then(() => console.log("conectado"))
       .catch((e) => console.log("error", e));
   }
-
+  //server
   private server(): void {
     this.app.listen(4000, () => {
       console.log("http://localhost:4000");
     });
-    
   }
 }
-
 export default new App().app;
